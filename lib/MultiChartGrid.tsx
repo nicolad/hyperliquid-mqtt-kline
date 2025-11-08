@@ -15,6 +15,23 @@ export default function MultiChartGrid() {
     interval: selectedInterval,
   });
 
+  // Calculate price change percentage
+  const calculatePriceChange = (coin: string) => {
+    const data = coinsData[coin];
+    if (!data?.candleData || data.candleData.length < 2) {
+      return { change: 0, percentage: 0 };
+    }
+
+    const current =
+      data.currentCandle?.close ||
+      data.candleData[data.candleData.length - 1].close;
+    const previous = data.candleData[0].open;
+    const change = current - previous;
+    const percentage = (change / previous) * 100;
+
+    return { change, percentage };
+  };
+
   return (
     <div
       style={{
@@ -41,7 +58,9 @@ export default function MultiChartGrid() {
           flexShrink: 0,
         }}
       >
-        <h1 style={{ margin: 0, fontSize: "1.5rem" }}>Live Trading Charts</h1>
+        <h1 style={{ margin: 0, fontSize: "1.5rem" }}>
+          HyperLiquid WebSocket Live Streaming
+        </h1>
 
         <div
           style={{
@@ -84,59 +103,85 @@ export default function MultiChartGrid() {
           boxSizing: "border-box",
         }}
       >
-        {TOP_COINS.map((coin) => (
-          <div
-            key={coin}
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
-              minHeight: 0,
-              minWidth: 0,
-              background: "#fff",
-            }}
-          >
+        {TOP_COINS.map((coin) => {
+          const priceChange = calculatePriceChange(coin);
+          const isPositive = priceChange.percentage >= 0;
+          const changeColor = isPositive ? "#26A69A" : "#EF5350";
+
+          return (
             <div
+              key={coin}
               style={{
-                padding: "0.5rem 1rem",
-                background: "#f5f5f5",
-                borderBottom: "1px solid #ddd",
-                fontWeight: "bold",
-                fontSize: "1rem",
-                flexShrink: 0,
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                overflow: "hidden",
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+                flexDirection: "column",
+                minHeight: 0,
+                minWidth: 0,
+                background: "#fff",
               }}
             >
-              <div>
-                {coin}
-                {coinsData[coin]?.currentCandle && (
-                  <span
-                    style={{
-                      marginLeft: "1rem",
-                      fontSize: "0.85rem",
-                      fontWeight: "normal",
-                      color: "#666",
-                    }}
-                  >
-                    ${coinsData[coin].currentCandle?.close.toFixed(2)}
-                  </span>
-                )}
+              <div
+                style={{
+                  padding: "0.5rem 1rem",
+                  background: "#f5f5f5",
+                  borderBottom: "1px solid #ddd",
+                  fontWeight: "bold",
+                  fontSize: "1rem",
+                  flexShrink: 0,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                  }}
+                >
+                  <span>{coin}</span>
+                  {coinsData[coin]?.currentCandle && (
+                    <>
+                      <span
+                        style={{
+                          fontSize: "0.9rem",
+                          fontWeight: "normal",
+                          color: "#333",
+                        }}
+                      >
+                        ${coinsData[coin].currentCandle?.close.toFixed(2)}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "0.8rem",
+                          fontWeight: "600",
+                          color: changeColor,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.2rem",
+                        }}
+                      >
+                        {isPositive ? "▲" : "▼"}
+                        {Math.abs(priceChange.percentage).toFixed(2)}%
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div style={{ flex: 1, minHeight: 0, minWidth: 0 }}>
+                <KLineChartComponent
+                  symbol={coin}
+                  interval={selectedInterval}
+                  initialData={coinsData[coin]?.candleData || []}
+                  height="100%"
+                />
               </div>
             </div>
-            <div style={{ flex: 1, minHeight: 0, minWidth: 0 }}>
-              <KLineChartComponent
-                symbol={coin}
-                interval={selectedInterval}
-                initialData={coinsData[coin]?.candleData || []}
-                height="100%"
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

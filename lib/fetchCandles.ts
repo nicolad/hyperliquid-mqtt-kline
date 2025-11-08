@@ -47,10 +47,6 @@ export async function fetchHyperliquidCandles(
       const errorData = await response
         .json()
         .catch(() => ({ error: "Unknown error" }));
-      console.error(
-        `❌ [FETCH] HTTP error for ${coin}! Status: ${response.status} ${response.statusText}`
-      );
-      console.error(`❌ [FETCH] Error details:`, errorData);
       throw new Error(
         `HTTP error! status: ${response.status}, details: ${JSON.stringify(
           errorData
@@ -61,7 +57,6 @@ export async function fetchHyperliquidCandles(
     const data: HyperliquidCandle[] = await response.json();
 
     if (!Array.isArray(data)) {
-      console.error(`❌ [FETCH] Invalid response format for ${coin}:`, data);
       return [];
     }
 
@@ -75,14 +70,6 @@ export async function fetchHyperliquidCandles(
       candle.v,
     ]);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(
-      `❌ [FETCH] Error fetching candles for ${coin}:`,
-      errorMessage
-    );
-    if (error instanceof Error && error.stack) {
-      console.error(`❌ [FETCH] Stack trace:`, error.stack);
-    }
     return [];
   }
 }
